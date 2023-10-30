@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   Entity,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { BoardType } from '../board.module';
 
@@ -11,6 +12,9 @@ import { BoardType } from '../board.module';
 export class BoardEntity {
   @PrimaryGeneratedColumn({ name: 'ID' })
   id: number;
+
+  @Column({ name: 'uuid' })
+  bid: string;
 
   @Column({ name: 'TITLE' })
   title: string;
@@ -23,6 +27,9 @@ export class BoardEntity {
 
   @CreateDateColumn({ name: 'CREATE_AT' })
   createAt: Date;
+
+  @UpdateDateColumn({ name: 'UPDATE_AT' })
+  updateAt: Date;
 
   @Column({ name: 'TYPE' })
   type: BoardType;

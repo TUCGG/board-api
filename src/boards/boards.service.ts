@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { BoardEntity } from './entities/board.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { v1 as uuid } from 'uuid';
 
 @Injectable()
 export class BoardsService {
@@ -11,7 +12,12 @@ export class BoardsService {
   ) {}
 
   async createBoard(board: BoardEntity): Promise<BoardEntity> {
-    const newBoard = this.boardsRepository.create(board);
+    const bid = uuid();
+    const newBoard: BoardEntity = {
+      ...board,
+      bid: bid,
+    };
+
     return await this.boardsRepository.save(newBoard);
   }
 
@@ -19,22 +25,36 @@ export class BoardsService {
     return this.boardsRepository.find();
   }
 
-  async getBoardById(id: number): Promise<BoardEntity> {
+  async getBoardById(bid: string): Promise<BoardEntity> {
     return this.boardsRepository.findOne({
       where: {
-        id,
+        bid,
       },
     });
   }
 
-  async deleteBoard(id: number): Promise<number> {
-    await this.boardsRepository.delete(id);
-    return id;
+  async deleteBoard(bid: string): Promise<string> {
+    await this.boardsRepository.delete(bid);
+    return bid;
   }
 
-  async updateBoardStatus(id: number, board: BoardEntity): Promise<number> {
-    await this.boardsRepository.update(id, board);
-    return id;
+  async updateBoardStatus(
+    bid: string,
+    updatedBoardData: BoardEntity,
+  ): Promise<BoardEntity> {
+    const existingBoard = await this.boardsRepository.findOne({
+      where: { bid },
+    });
+
+    if (!existingBoard) {
+      throw new NotFoundException(`게시글 ID ${bid}를 찾을 수 없습니다.`);
+    }
+
+    // 업데이트된 데이터로 기존 게시글을 업데이트합니다.
+    Object.assign(existingBoard, updatedBoardData);
+
+    // 업데이트된 게시글을 저장하고 반환합니다.
+    return await this.boardsRepository.save(existingBoard);
   }
 }
 
