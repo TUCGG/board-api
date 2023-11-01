@@ -13,9 +13,6 @@ export class BoardEntity {
   @PrimaryGeneratedColumn({ name: 'ID' })
   id: number;
 
-  @Column({ name: 'uuid' })
-  bid: string;
-
   @Column({ name: 'TITLE' })
   title: string;
 

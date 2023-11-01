@@ -24,21 +24,21 @@ export class BoardsController {
     return await this.boardsService.createBoard(board);
   }
 
-  @Get('/:bid')
-  async getBoardById(@Param('bid') bid: string): Promise<BoardEntity> {
-    return this.boardsService.getBoardById(bid);
+  @Get('/:id')
+  async getBoardById(@Param('id') id: number): Promise<BoardEntity[]> {
+    return this.boardsService.getBoardById(id);
   }
 
-  @Delete('/:bid')
-  async deleteBoard(@Param('bid') bid: string): Promise<string> {
-    return this.boardsService.deleteBoard(bid);
+  @Delete('/:id')
+  async deleteBoard(@Param('id') id: number): Promise<number> {
+    return this.boardsService.deleteBoard(id);
   }
 
-  @Put('/:bid')
+  @Put('/:id')
   async updateBoardStatus(
-    @Param('bid') bid: string,
+    @Param('id') id: number,
     @Body() updatedBoardData: BoardEntity,
   ): Promise<BoardEntity> {
-    return this.boardsService.updateBoardStatus(bid, updatedBoardData);
+    return this.boardsService.updateBoardStatus(id, updatedBoardData);
   }
 }

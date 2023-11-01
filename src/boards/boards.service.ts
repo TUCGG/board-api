@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { BoardEntity } from './entities/board.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { v1 as uuid } from 'uuid';
 
 @Injectable()
 export class BoardsService {
@@ -12,12 +11,7 @@ export class BoardsService {
   ) {}
 
   async createBoard(board: BoardEntity): Promise<BoardEntity> {
-    const bid = uuid();
-    const newBoard: BoardEntity = {
-      ...board,
-      bid: bid,
-    };
-
+    const newBoard = this.boardsRepository.create(board);
     return await this.boardsRepository.save(newBoard);
   }
 
@@ -25,29 +19,48 @@ export class BoardsService {
     return this.boardsRepository.find();
   }
 
-  async getBoardById(bid: string): Promise<BoardEntity> {
-    return this.boardsRepository.findOne({
+  async getBoardById(id: number): Promise<BoardEntity[]> {
+    const board = await this.boardsRepository.findOne({
       where: {
-        bid,
+        id,
       },
     });
+
+    if (!board) {
+      return null;
+    }
+
+    const [previousBoard, nextBoard] = await Promise.all([
+      this.boardsRepository
+        .createQueryBuilder('board')
+        .where('board.id < :id', { id: board.id })
+        .orderBy('board.id', 'DESC')
+        .getOne(),
+      this.boardsRepository
+        .createQueryBuilder('board')
+        .where('board.id > :id', { id: board.id })
+        .orderBy('board.id', 'ASC')
+        .getOne(),
+    ]);
+
+    return [previousBoard, board, nextBoard];
   }
 
-  async deleteBoard(bid: string): Promise<string> {
-    await this.boardsRepository.delete(bid);
-    return bid;
+  async deleteBoard(id: number): Promise<number> {
+    await this.boardsRepository.delete(id);
+    return id;
   }
 
   async updateBoardStatus(
-    bid: string,
+    id: number,
     updatedBoardData: BoardEntity,
   ): Promise<BoardEntity> {
     const existingBoard = await this.boardsRepository.findOne({
-      where: { bid },
+      where: { id },
     });
 
     if (!existingBoard) {
-      throw new NotFoundException(`게시글 ID ${bid}를 찾을 수 없습니다.`);
+      throw new NotFoundException(`게시글 ID ${id}를 찾을 수 없습니다.`);
     }
 
     // 업데이트된 데이터로 기존 게시글을 업데이트합니다.
@@ -57,43 +70,3 @@ export class BoardsService {
     return await this.boardsRepository.save(existingBoard);
   }
 }
-
-// @Injectable()
-// export class BoardsService {
-//   private boards: Board[] = [];
-
-//   getAllBoards(): Board[] {
-//     return this.boards;
-//   }
-
-//   createBoard(createBoardDto: CreateBoardDto): Board {
-//     const { title, description } = createBoardDto;
-
-//     const board: Board = {
-//       id: uuid(),
-//       title,
-//       description,
-//       contents: '',
-//       createAt: new Date().toISOString(),
-//       status: BoardStatus.PUBLIC,
-//       count: 0,
-//     };
-
-//     this.boards.push(board);
-//     return board;
-//   }
-
-//   getBoardById(id: string): Board {
-//     return this.boards.find((board) => board.id === id);
-//   }
-
-//   deleteBoard(id: string): void {
-//     this.boards = this.boards.filter((board) => board.id !== id);
-//   }
-
-//   updateBoardStatus(id: string, status: BoardStatus): Board {
-//     const board = this.getBoardById(id);
-//     board.status = status;
-//     return board;
-//   }
-// }
